@@ -1,43 +1,44 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { UsersService } from './users.service';
 
-@Controller('users') // same as /users
+@Controller('users') // same as /users route
 export class UsersController {
+    constructor(private readonly usersService: UsersService) { }
+
     @Get() // "GET /users" with optional single query param
-    findAll(@Query('role') role?: 'INTERN' | 'ENGINEER' | 'ADMIN') {
-        return [{ role }];
-    }
-
-    @Get('filtered') // "GET /users/filtered?role=admin&name=niko" with option role and required name query params
-    findAllWithName(@Query() query:
-        { role?: 'INTERN' | 'ENGINEER' | 'ADMIN', name: string }
-    ) {
-        const { role, name } = query;
-        return [{ role, name }];
-    }
-
-    @Get('interns') // GET /users/interns
-    findAllInterns() {
-        return [];
+    findUsers(@Query('isActive') isActive?: string) {
+        return this.usersService.findUsers(isActive);
     }
 
     @Get(':id') // GET /users/:id
-    findOne(@Param('id') id: string) {
-        return { id };
+    findUser(@Param('id') id: string) {
+        return this.usersService.findUser(id);
+    }
+
+    @Get('filtered') // "GET /users/filtered?role=Protagonist&name=Niko" with option role and required name query params
+    findUsersWithName(@Query() query:
+        { role?: 'Protagonist' | 'Cousin', name: string }
+    ) {
+        return this.usersService.findUsersWithName(query);
+    }
+
+    @Get('active') // GET /users/interns
+    findActiveUsers() {
+        return this.usersService.findActiveUsers();
     }
 
     @Post() // POST /users
-    create(@Body() user: {}) {
-        console.log(user);
-        return user;
+    createUser(@Body() user: { name: string, email: string, age: number }) {
+        return this.usersService.createUser(user);
     }
 
     @Patch(':id') // PATCH /users/:id
-    findOneAndUpdate(@Param('id') id: string, @Body() userUpdate: {}) {
-        return { id, ...userUpdate };
+    updateUser(@Param('id') id: string, @Body() userUpdate: { name: string, email: string, age: number, isActive: boolean }) {
+        return this.usersService.updateUser(+id, userUpdate);
     }
 
     @Delete(':id') // DELETE /users/:id
-    findOneAndDelete(@Param('id') id: string) {
-        return { id };
+    deleteUser(@Param('id') id: string) {
+        return this.usersService.deleteUser(+id);
     }
 }
