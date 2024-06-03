@@ -1,5 +1,9 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { 
+    Body, Controller, Delete, Get, Param, Patch, Post, Query, ParseIntPipe, ValidationPipe
+} from '@nestjs/common';
 import { UsersService } from './users.service';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('users') // same as /users route
 export class UsersController {
@@ -11,13 +15,13 @@ export class UsersController {
     }
 
     @Get(':id') // GET /users/:id
-    findUser(@Param('id') id: string) {
+    findUser(@Param('id', ParseIntPipe) id: number) {
         return this.usersService.findUser(id);
     }
 
     @Get('filtered') // "GET /users/filtered?role=Protagonist&name=Niko" with option role and required name query params
     findUsersWithName(@Query() query:
-        { role?: 'Protagonist' | 'Cousin', name: string }
+        { age?: 28 | 30, name: string }
     ) {
         return this.usersService.findUsersWithName(query);
     }
@@ -28,17 +32,17 @@ export class UsersController {
     }
 
     @Post() // POST /users
-    createUser(@Body() user: { name: string, email: string, age: number }) {
-        return this.usersService.createUser(user);
+    createUser(@Body(ValidationPipe) createUserDto: CreateUserDto) {
+        return this.usersService.createUser(createUserDto);
     }
 
     @Patch(':id') // PATCH /users/:id
-    updateUser(@Param('id') id: string, @Body() userUpdate: { name: string, email: string, age: number, isActive: boolean }) {
-        return this.usersService.updateUser(+id, userUpdate);
+    updateUser(@Param('id', ParseIntPipe) id: number, @Body(ValidationPipe) updateUserDto: UpdateUserDto) {
+        return this.usersService.updateUser(id, updateUserDto);
     }
 
     @Delete(':id') // DELETE /users/:id
-    deleteUser(@Param('id') id: string) {
-        return this.usersService.deleteUser(+id);
+    deleteUser(@Param('id', ParseIntPipe) id: number) {
+        return this.usersService.deleteUser(id);
     }
 }

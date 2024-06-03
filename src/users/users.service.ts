@@ -1,4 +1,7 @@
 import { Injectable } from '@nestjs/common';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { NotFoundException } from '@nestjs/common';
 
 @Injectable()
 export class UsersService {
@@ -29,60 +32,54 @@ export class UsersService {
 
     findUsers(isActive?: string) {
         let foundUsers = [];
+        
         if (isActive === undefined) {
             foundUsers = this.usersCollection;
+        } else {
+            foundUsers = this.usersCollection.filter((user) => user.isActive.toString() === isActive);
         }
 
-        foundUsers = this.usersCollection.filter((user) => user.isActive.toString() === isActive);
+        if (!foundUsers.length) throw new NotFoundException("No users found");
 
-        if (foundUsers.length) {
-            return foundUsers;
-        }
-
-        return "No users found";
+        return foundUsers;
     }
 
-    findUser(id: string) {
-        const foundUser = this.usersCollection.find((user) => user.id === +id);
-        if (foundUser) {
-            return foundUser;
-        }
+    findUser(id: number) {
+        const foundUser = this.usersCollection.find((user) => user.id === id);
+        
+        if (!foundUser) throw new NotFoundException("No user found");
 
-        return "No user found";
+        return foundUser;
     }
 
-    findUsersWithName(query: { isActive?: string, name: string }) {
-        const isActiveBool = query.isActive !== undefined ? query.isActive === 'true' : undefined;
+    findUsersWithName(query: { age?: number, name: string }) {
+        const ageFilter = query.age !== undefined ? query.age : undefined;
 
         const foundUsers = this.usersCollection.filter((user) => {
             const matchesName = user.name.toLowerCase().includes(query.name.toLowerCase());
-            const matchesIsActive = isActiveBool === undefined || user.isActive === isActiveBool;
-            return matchesName && matchesIsActive;
+            const matchesAgeFilter = ageFilter === undefined || user.age === ageFilter;
+            return matchesName && matchesAgeFilter;
         });
 
-        if (foundUsers.length) {
-            return foundUsers;
-        }
+        if (!foundUsers.length) throw new NotFoundException("No users found");
 
-        return "No users found";
+        return foundUsers;
     }
 
     findActiveUsers() {
         const foundUsers = this.usersCollection.filter((user) => user.isActive === true);
 
-        if (foundUsers.length) {
-            return foundUsers;
-        }
+        if (!foundUsers.length) throw new NotFoundException("No users found");
 
-        return "No users found";
+        return foundUsers;
     }
 
-    createUser(user: { name: string, email: string, age: number }) {
+    createUser(createUserDto: CreateUserDto) {
         const newUser = {
             id: this.usersCollection.length + 1,
-            name: user.name,
-            email: user.email,
-            age: user.age,
+            name: createUserDto.name,
+            email: createUserDto.email,
+            age: createUserDto.age,
             isActive: true
         }
 
@@ -91,18 +88,16 @@ export class UsersService {
         return `New user with id ${newUser.id} has been created`;
     }
 
-    updateUser(id: number, userUpdate: { name: string, email: string, age: number, isActive: boolean }) {
+    updateUser(id: number, updateUserDto: UpdateUserDto) {
         const foundUser = this.usersCollection.find((user) => user.id === id);
 
-        if (!foundUser) {
-            return "No user found";
-        }
+        if (!foundUser) throw new NotFoundException("No user found");
 
         // Update user properties
-        foundUser.name = userUpdate.name;
-        foundUser.email = userUpdate.email;
-        foundUser.age = userUpdate.age;
-        foundUser.isActive = userUpdate.isActive;
+        foundUser.name = updateUserDto.name;
+        foundUser.email = updateUserDto.email;
+        foundUser.age = updateUserDto.age;
+        foundUser.isActive = updateUserDto.isActive;
 
         return foundUser;
     }
@@ -110,9 +105,7 @@ export class UsersService {
     deleteUser(id: number) {
         const userIndex = this.usersCollection.findIndex((user) => user.id === id);
 
-        if (userIndex === -1) {
-            return "No user found";
-        }
+        if (userIndex === -1) throw new NotFoundException("No user found");
 
         this.usersCollection.splice(userIndex, 1);
         return `User with id ${id} has been deleted`;
